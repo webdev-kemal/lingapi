@@ -86,14 +86,25 @@ WSGI_APPLICATION = 'api.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'lingslide',
+#         'USER': 'postgres',
+#         'PASSWORD': os.environ.get('PSQL_PASS'),
+#         'HOST': 'localhost',   # Set to the appropriate host
+#         'PORT': '5432',        # Set to the appropriate port
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'lingslide',
-        'USER': 'postgres',
-        'PASSWORD': os.environ.get('PSQL_PASS'),
-        'HOST': 'localhost',   # Set to the appropriate host
-        'PORT': '5432',        # Set to the appropriate port
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres.whhdjxuuzrsmliinxtro',
+        'PASSWORD': os.environ.get('SUPABASE_PSW'),
+        'HOST': os.environ.get('SUPABASE_URL'),
+        'PORT': '5432',
     }
 }
 
