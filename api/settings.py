@@ -28,7 +28,7 @@ GOOGLE_OAUTH2_CLIENT_ID = os.environ.get('GOOGLE_OAUTH2_CLIENT_ID')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['18.156.73.61', '127.0.0.1']
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'lingauth',
     'collection',
     'openai_api',
+    'quiz',
     'rest_framework',
 ]
 
@@ -103,7 +104,7 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres.whhdjxuuzrsmliinxtro',
         'PASSWORD': os.environ.get('SUPABASE_PSW'),
-        'HOST': os.environ.get('SUPABASE_URL'),
+        'HOST': os.environ.get('SUPABASE_HOST'),
         'PORT': '5432',
     }
 }

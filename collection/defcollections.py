@@ -8,20 +8,22 @@ default_collections = [
         "words": 
         [
             {
-            "title": "sursauter", 
+            "title": "sauter", 
             "order": 0, 
             "type": "verb", 
-            "notes": ["Sample Note 1", "Sample Note 2"]  
+            "notes": ["Örnek Not"],
+            "equivalent": "zıplamak"
             }, 
             {
             "title": "chevaucher", 
             "order": 1, 
             "type": "verb", 
-            "notes": ["Sample Note 1", "Sample Note 2"]  
+            "notes": ["Örnek Not"],
+            "equivalent": "örtüşme"
             }, 
              
         ],
-        "language": "english",
+        "language": "french",
         "isPublic": False,
         "lastEdited": "",
         "stars_count": 0,
@@ -36,19 +38,22 @@ default_collections = [
             "title": "calomnier", 
             "order": 0, 
             "type": "verb", 
-            "notes": ["Sample Note 1", "Sample Note 2"]  
+            "notes": ["Örnek Not"],
+            "equivalent": "iftira"
             }, 
             {
-            "title": "métissage", 
+            "title": "impérieux", 
             "order": 1, 
             "type": "verb", 
-            "notes": ["Sample Note 1", "Sample Note 2"]  
+            "notes": ["Örnek Not"],
+            "equivalent": "zorba"
             }, 
             {
-            "title": "émousser", 
+            "title": "insolent", 
             "order": 2, 
             "type": "verb", 
-            "notes": ["Sample Note 1", "Sample Note 2"]  
+            "notes": ["Örnek Not"],
+            "equivalent": "arsız"
             }, 
              
         ],
@@ -67,13 +72,15 @@ default_collections = [
             "title": "mélanger", 
             "order": 0, 
             "type": "verb", 
-            "notes": ["Sample Note 1", "Sample Note 2"]  
+            "notes": ["Örnek Not"],
+            "equivalent": "karıştırmak"
             }, 
             {
             "title": "ajouter", 
             "order": 1, 
             "type": "verb", 
-            "notes": ["Sample Note 1", "Sample Note 2"]  
+            "notes": ["Örnek Not"],
+            "equivalent": "eklemek"
             }, 
         ],
         "language": "french",
