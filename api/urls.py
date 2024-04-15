@@ -22,4 +22,5 @@ urlpatterns = [
     path('auth/', include('lingauth.urls')),
     path('collections/', include('collection.urls')),
     path('openai/', include('openai_api.urls')),
+    path('quiz/', include('quiz.urls')),
 ]

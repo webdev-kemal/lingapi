@@ -94,6 +94,22 @@ def set_username(request):
 
     return Response({'message': 'Username set successfully'})
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def set_data(request):
+    quizData = request.data.get('quiz_data')
+
+    existing_quiz_data = request.user.quiz_data or []
+
+    # Append the new quiz data to the existing data
+    existing_quiz_data.append(quizData)
+
+    # Update the user's quiz data field
+    request.user.quiz_data = existing_quiz_data
+    request.user.save()
+
+    return Response({'message': 'Quiz data updated successfully'})
+
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -102,7 +118,8 @@ class UserInfoView(APIView):
         data = {
             'credits': user.credits,
             'locale': user.locale,
-            'username': user.username
+            'username': user.username,
+            'quiz_data': user.quiz_data
         }
         return Response(data)
 

@@ -18,9 +18,10 @@ class CustomUser(AbstractUser):
     pfp = models.URLField(("profile picture"), null=True, blank=True)
     first_name = models.CharField(("first name"), max_length=30, blank=True)
     last_name = models.CharField(("last name"), max_length=30, blank=True)
-    locale = models.CharField(("locale"), max_length=10, blank=True)
+    locale = models.CharField(("locale"), max_length=10, blank=True, null=True)
 
     credits = models.IntegerField(default=30)
+    quiz_data = models.JSONField(("quiz data"), default=list)
     # collections = models.ManyToManyField(Collection, related_name="users", blank=True)
     
 
