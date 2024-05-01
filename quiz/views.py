@@ -35,6 +35,10 @@ def CreateQuizView(request):
     # serializer = QuizSerializer(data=request.data, context={'owner': request.user})
     print("User:", request.user)  # Print user information to the console
     print("Request data:", request.data)  
+
+    # is_ai_made = request.data.get('isAImade', False)
+    # request.data['isAImade'] = is_ai_made
+
     serializer = QuizSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save(owner=request.user)
