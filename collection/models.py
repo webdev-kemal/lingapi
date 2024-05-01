@@ -6,6 +6,7 @@ class Collection(models.Model):
     id = models.BigAutoField(primary_key=True)
     owner = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     stars_count = models.IntegerField(("stars count"), default=0)
+    gradInt = models.IntegerField(("gradient id"), default=2)
     whoStarred = models.JSONField(default=list)
     title = models.CharField(("title"), max_length=255)
     emoji = models.CharField(("emoji"), max_length=5)

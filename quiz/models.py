@@ -14,6 +14,7 @@ class Quiz(models.Model):
     language = models.CharField(("language"), max_length=50)
     isPublic = models.BooleanField(("is public"), default=True)
     isForked = models.BooleanField(("is forked"), default=False)
+    isAImade = models.BooleanField(("is gpt"), default=False)
     whoForked = models.JSONField(default=list)
     isOfficial = models.BooleanField(("is official"), default=False)
     isMobile = models.BooleanField(("is mobile"), default=False)
