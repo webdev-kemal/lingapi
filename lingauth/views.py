@@ -1,8 +1,9 @@
 
 from rest_framework import status, generics
-
+from django.utils import timezone
 from rest_framework.views import APIView
 from .models import CustomUser
+from collection.models import Collection
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -119,9 +120,95 @@ class UserInfoView(APIView):
             'credits': user.credits,
             'locale': user.locale,
             'username': user.username,
-            'quiz_data': user.quiz_data
+            'quiz_data': user.quiz_data,
+            'saved_items': user.saved_items,
+            'notifications': user.notifications,
+            'old_notifications': user.old_notifications
         }
         return Response(data)
+    
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_saved_data(request):
+    item_data = request.data.get('item_data')
+
+    if 'item_type' not in item_data or 'item_id' not in item_data:
+        return Response({'error': 'Invalid item data'}, status=400)
+
+    collection_id = item_data['item_id']
+    item_type = item_data['item_type']
+    item_name = item_data['item_name']
+    
+    existing_saved_items = request.user.saved_items or []
+    for saved_item in existing_saved_items:
+        if saved_item['item_type'] == 'collection' and saved_item['item_id'] == collection_id:
+            # Remove the collection from saved items list
+            existing_saved_items.remove(saved_item)
+            request.user.saved_items = existing_saved_items
+            request.user.save()
+            # Update the collection star count
+            try:
+                collection = Collection.objects.get(pk=collection_id)
+                existing_who_starred = collection.whoStarred or []
+                if request.user.id in existing_who_starred:
+                    existing_who_starred.remove(request.user.id)
+                    collection.whoStarred = existing_who_starred
+                    collection.save()
+
+                return Response({'message': 'Collection removed from saved items'})
+            except Collection.DoesNotExist:
+                return Response({'error': 'Collection not found'}, status=404)
+
+
+    # Add the saved item to the user's saved_items list
+    existing_saved_items.append(item_data)
+    request.user.saved_items = existing_saved_items
+    request.user.save()
+        
+    try:
+        collection = Collection.objects.get(pk=collection_id)
+        existing_who_starred = collection.whoStarred or []
+        existing_who_starred.append(request.user.id)
+        collection.whoStarred = existing_who_starred
+        collection.save()
+
+        # Update collection owner's notifications list
+        owner = collection.owner
+        owner_notifications = owner.notifications or []
+        notification = {
+            'notification_type': 'favourite',
+            'who_favourited': request.user.username,
+            'item_id': collection_id,
+            'type': item_type,
+            'item_name': item_name,
+            'date': str(timezone.now())
+        }
+        owner_notifications.append(notification)
+        owner.notifications = owner_notifications
+        owner.save()
+
+        return Response({'message': 'Saved data updated successfully'})
+    except Collection.DoesNotExist:
+        return Response({'error': 'Collection not found'}, status=404)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_notifications_read(request):
+    try:
+        user = request.user
+        user_notifications = user.notifications or []
+
+        # Move notifications to old_notifications
+        user_old_notifications = user.old_notifications or []
+        user_old_notifications.extend(user_notifications)
+        user.old_notifications = user_old_notifications
+
+        # Clear notifications
+        user.notifications = []
+        user.save()
+        return Response({'message': 'Notifications marked as read successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 
 # def UserInitApi(request):
 #     id_token = request.headers.get('Authorization')

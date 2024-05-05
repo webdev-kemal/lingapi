@@ -1,7 +1,7 @@
 # lingauth/urls.py
 
 from django.urls import path
-from .views import registerUser, UserInitApi, set_username, set_data, UserInfoView
+from .views import registerUser, UserInitApi, set_username, set_data, UserInfoView, update_saved_data, mark_notifications_read
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -19,6 +19,8 @@ urlpatterns = [
     path('set-username/', set_username, name='set-username'),
     path('set-data/', set_data, name='set-data'),
     path('get/', UserInfoView.as_view(), name='get-userinfo'),
+    path('update-saved-data/', update_saved_data, name='update-saved-data'),
+    path('mark-notifications-read/', mark_notifications_read, name='mark_notifications_read'),
 ]
 
 

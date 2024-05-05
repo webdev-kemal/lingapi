@@ -23,7 +23,9 @@ class CustomUser(AbstractUser):
     credits = models.IntegerField(default=30)
     quiz_data = models.JSONField(("quiz data"), default=list)
     # collections = models.ManyToManyField(Collection, related_name="users", blank=True)
-    
+    notifications = models.JSONField(("notifications data"), default=list)
+    old_notifications = models.JSONField(("notifications data"), default=list)
+    saved_items = models.JSONField(("saved items"), default=list)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
