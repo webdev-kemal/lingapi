@@ -1,6 +1,9 @@
 
 from rest_framework import status, generics
+
 from django.utils import timezone
+from datetime import datetime, timedelta
+
 from rest_framework.views import APIView
 from .models import CustomUser
 from collection.models import Collection
@@ -50,6 +53,7 @@ def registerUser(request):
         user = CustomUser.objects.create(
             email=data['email'],
             password=make_password(data['password']),
+            
         )
         serializer = UserSerializerWithToken(user, many=False)
         return Response(serializer.data)
@@ -89,9 +93,24 @@ def set_username(request):
         return Response({'error': 'Username is already taken'}, status=400)
 
     # Set the new username and mark changedUsername as True
+
+    user_notifications = request.user.notifications or []
+    notification = {
+        'notification_emoji': '👀',
+        'old_nickname': request.user.username,
+        'item_id': 0,
+        'type': 'nickname',
+        'item_name': new_username,
+        'date': str(timezone.now())
+    }
+    user_notifications.append(notification)
+    request.user.notifications = user_notifications
+  
     request.user.username = new_username
     request.user.changedUsername = True
+
     request.user.save()
+
 
     return Response({'message': 'Username set successfully'})
 
@@ -117,13 +136,16 @@ class UserInfoView(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         data = {
-            'credits': user.credits,
+            'streak': user.streak,
             'locale': user.locale,
+            'credits': user.credits,
+            'activity': user.activity,
             'username': user.username,
             'quiz_data': user.quiz_data,
             'saved_items': user.saved_items,
             'notifications': user.notifications,
-            'old_notifications': user.old_notifications
+            'old_notifications': user.old_notifications,
+            'current_week_data': user.current_week_data,
         }
         return Response(data)
     
@@ -138,6 +160,8 @@ def update_saved_data(request):
     collection_id = item_data['item_id']
     item_type = item_data['item_type']
     item_name = item_data['item_name']
+    item_emoji = item_data['item_emoji']
+    item_length = item_data['item_length']
     
     existing_saved_items = request.user.saved_items or []
     for saved_item in existing_saved_items:
@@ -176,7 +200,7 @@ def update_saved_data(request):
         owner = collection.owner
         owner_notifications = owner.notifications or []
         notification = {
-            'notification_type': 'favourite',
+            'notification_emoji': '❤️',
             'who_favourited': request.user.username,
             'item_id': collection_id,
             'type': item_type,
@@ -207,6 +231,91 @@ def mark_notifications_read(request):
         user.notifications = []
         user.save()
         return Response({'message': 'Notifications marked as read successfully'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_activity(request):
+   
+    try:
+        user = request.user
+        user_activity = user.activity or []
+
+        # activity_data = request.data.get('activity_data')
+        # activity_type = activity_data['activity_type']
+        # activity_name = activity_data['activity_name']
+        # activity_id = activity_data['activity_id']
+
+        # Update current_week_data
+     
+
+        activity_type = request.data.get('activity_type')
+        activity_name = request.data.get('activity_name')
+        activity_id = request.data.get('activity_id')
+
+
+         # Get today's date
+        today_date = timezone.now().date()
+        
+        # Find the index of today's day (Monday = 0, Sunday = 6)
+        today_index = today_date.weekday()
+
+        # current_week_data = default_week_data.copy()
+        # current_week_data = user.current_week_data or default_week_data.copy()
+        current_week_data = user.current_week_data 
+
+        # Update current_week_data based on today's date
+        for i, day_data in enumerate(current_week_data):
+    # Set isToday and user_activity if it's today
+            if i == today_index:
+                day_data['isToday'] = True
+                day_data['user_activity'] = True
+            else:
+                # Reset isToday to False for other days
+                day_data['isToday'] = False
+                # Update hasPassed based on the comparison of their indexes with today's index
+                day_data['hasPassed'] = i < today_index
+                # Keep user_activity true if it's already set to true
+                if day_data['user_activity']:
+                    day_data['hasPassed'] = False
+
+
+        if user_activity:
+            # Get the date of the last activity
+            last_activity_date = user_activity[-1].get('date')
+            # Convert last_activity_date to a datetime object
+            last_activity_date = datetime.strptime(last_activity_date, '%Y-%m-%d %H:%M:%S.%f%z').date()
+            
+            # If the last activity was yesterday, increment streak
+            if last_activity_date == today_date - timedelta(days=1):
+                # Increment the streak
+                user.streak += 1
+            # If the last activity was not yesterday, reset streak to 1
+            elif last_activity_date < today_date - timedelta(days=1):
+                user.streak = 1
+            # If the last activity was today, do nothing to the streak
+        else:
+            # If there is no previous activity, start the streak from 1
+            user.streak = 1
+        
+        activity = {
+            'activity_type': activity_type,
+            'activity_name': activity_name,
+            'activity_id': activity_id,
+            'username': user.id,
+            'date': str(timezone.now())
+        }
+
+        user.streak = 1
+
+        user_activity.append(activity)
+        user.activity = user_activity
+        # user.activity = []
+        user.current_week_data = current_week_data
+        user.save()
+
+        return Response({'message': 'Activity listed successfuly'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 

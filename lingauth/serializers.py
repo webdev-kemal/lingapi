@@ -8,7 +8,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'first_name', 'last_name', 'pfp', 'locale', 'username', 'changedUsername', 'credits', 'notifications', 'old_notifications', 'saved_items']
+        fields = ['id', 'email', 'first_name', 'last_name', 'pfp', 'locale', 'username', 'changedUsername', 'credits', 'notifications', 'old_notifications', 'saved_items', 'is_premium', "activity", "streak", "current_week_data"]
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
