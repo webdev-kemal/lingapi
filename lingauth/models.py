@@ -5,8 +5,27 @@ import string
 from django.utils.crypto import get_random_string
 from .managers import CustomUserManager  # Update import path
 from .defcollections import default_collections 
+from django.utils import timezone
 
+notifications = [{
+                'notification_emoji': '⭐',
+                'item_id': 0,
+                'type': 'welcome',
+                'item_name': 'Hoşgeldiniz!',
+                'date': str(timezone.now())
+            }]
 
+current_day = timezone.now().strftime('%A')
+
+default_week_data = [
+            {"day":"Monday", "user_activity": False, "hasPassed": False, "isToday":  current_day == "Monday"},
+            {"day":"Tuesday", "user_activity": False, "hasPassed": False, "isToday":  current_day == "Tuesday"},
+            {"day":"Wednesday", "user_activity": False, "hasPassed": False, "isToday":  current_day == "Wednesday"},
+            {"day":"Thursday", "user_activity": False, "hasPassed": False, "isToday":  current_day == "Thursday"},
+            {"day":"Friday", "user_activity": False, "hasPassed": False, "isToday":  current_day == "Friday"},
+            {"day":"Saturday", "user_activity": False, "hasPassed": False, "isToday":  current_day == "Saturday"},
+            {"day":"Sunday", "user_activity": False, "hasPassed": False, "isToday":  current_day == "Sunday"}
+        ]
 
 class CustomUser(AbstractUser):
 
@@ -23,7 +42,13 @@ class CustomUser(AbstractUser):
     credits = models.IntegerField(default=30)
     quiz_data = models.JSONField(("quiz data"), default=list)
     # collections = models.ManyToManyField(Collection, related_name="users", blank=True)
-    
+    notifications = models.JSONField(("notifications data"), default=notifications)
+    old_notifications = models.JSONField(("notifications data"), default=list)
+    saved_items = models.JSONField(("saved items"), default=list)
+
+    activity = models.JSONField(("activity"), default=list)
+    streak = models.IntegerField(default=0)
+    current_week_data = models.JSONField(("current_week"), default=default_week_data)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

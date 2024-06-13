@@ -5,6 +5,7 @@ import requests
 from django.core.exceptions import ValidationError
 from typing import Tuple
 from .models import CustomUser  # Update import path
+from django.utils import timezone
 
 GOOGLE_ID_TOKEN_INFO_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
 
@@ -43,6 +44,7 @@ def create_or_update_user_from_google_data(*, id_token: str) -> CustomUser:
     user.last_name = google_user_data.get('family_name', '')
     user.pfp = pfp
     user.locale = locale
+
     user.save()
 
     return user
