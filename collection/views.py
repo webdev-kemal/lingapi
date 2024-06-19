@@ -96,6 +96,7 @@ class UserCollectionListView(ListAPIView):
     def get_queryset(self):
         username = self.kwargs['username']
         user = get_object_or_404(CustomUser, username=username)
+        print(Collection.objects.filter(owner=user))
         return Collection.objects.filter(owner=user)
 
 class UserPublicListView(ListAPIView):
@@ -135,6 +136,20 @@ class VisitCollectionView(APIView):
         serializer = self.serializer_class(collection)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
-    
+class AllCollectionsListView(ListAPIView):
+    serializer_class = CollectionListSerializer
+    permission_classes = []  
+
+    def get_queryset(self):
+        # Get the language filter from the request query parameters
+        language = self.request.query_params.get('language', None)
+
+        # Query the collections
+        queryset = Collection.objects.filter(isPublic=True)
+
+        if language:
+            queryset = queryset.filter(language=language)
+
+        return queryset
 
 
