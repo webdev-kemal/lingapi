@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from rest_framework.views import APIView
 from .models import CustomUser
 from collection.models import Collection
+from quiz.models import Quiz
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -117,23 +118,31 @@ def set_username(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def set_data(request):
-    quizData = request.data.get('quiz_data')
+    user = CustomUser.objects.get(pk=request.user.pk)
+    quiz_data = request.data.get('quiz_data')
+    
+    if not quiz_data:
+        return Response({"error": "No quiz_data provided"}, status=400)
 
-    existing_quiz_data = request.user.quiz_data or []
+    # Ensure user's quiz_data is a list
+    if not isinstance(user.quiz_data, list):
+        user.quiz_data = []
 
-    # Append the new quiz data to the existing data
-    existing_quiz_data.append(quizData)
+    try:
+        print(f"Before appending: {len(user.quiz_data)}")
+        user.quiz_data.append(quiz_data)
+        user.save()
+        print(f"After appending: {len(user.quiz_data)}")
+        return Response(user.quiz_data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
-    # Update the user's quiz data field
-    request.user.quiz_data = existing_quiz_data
-    request.user.save()
 
-    return Response({'message': 'Quiz data updated successfully'})
 
 class UserInfoView(APIView):
     permission_classes = [IsAuthenticated]
-
     def get(self, request, *args, **kwargs):
+
         user = request.user
         data = {
             'streak': user.streak,
@@ -157,63 +166,74 @@ def update_saved_data(request):
     if 'item_type' not in item_data or 'item_id' not in item_data:
         return Response({'error': 'Invalid item data'}, status=400)
 
-    collection_id = item_data['item_id']
+    item_id = item_data['item_id']
     item_type = item_data['item_type']
     item_name = item_data['item_name']
     item_emoji = item_data['item_emoji']
     item_length = item_data['item_length']
-    
+
     existing_saved_items = request.user.saved_items or []
-    for saved_item in existing_saved_items:
-        if saved_item['item_type'] == 'collection' and saved_item['item_id'] == collection_id:
-            # Remove the collection from saved items list
-            existing_saved_items.remove(saved_item)
+    
+    # Helper function to remove item from saved items
+    def remove_saved_item(item_type, item_id):
+        for saved_item in existing_saved_items:
+            if saved_item['item_type'] == item_type and saved_item['item_id'] == item_id:
+                existing_saved_items.remove(saved_item)
+                request.user.saved_items = existing_saved_items
+                request.user.save()
+                return True
+        return False
+
+    # Helper function to update item star count
+    def update_star_count(model, item_id):
+        item = get_object_or_404(model, pk=item_id)
+        existing_who_starred = item.whoStarred or []
+        if request.user.id in existing_who_starred:
+            existing_who_starred.remove(request.user.id)
+            item.whoStarred = existing_who_starred
+            item.save()
+            return Response({'message': f'{item_type.capitalize()} removed from saved items'})
+        else:
+            existing_who_starred.append(request.user.id)
+            item.whoStarred = existing_who_starred
+            item.save()
+            
+            # Update item owner's notifications list
+            owner = item.owner
+            owner_notifications = owner.notifications or []
+            notification = {
+                'notification_emoji': '❤️',
+                'who_favourited': request.user.username,
+                'item_id': item_id,
+                'type': item_type,
+                'item_name': item_name,
+                'date': str(timezone.now())
+            }
+            owner_notifications.append(notification)
+            owner.notifications = owner_notifications
+            owner.save()
+            
+            return Response({'message': 'Saved data updated successfully'})
+
+    if item_type == 'collection':
+        if remove_saved_item('collection', item_id):
+            return update_star_count(Collection, item_id)
+        else:
+            existing_saved_items.append(item_data)
             request.user.saved_items = existing_saved_items
             request.user.save()
-            # Update the collection star count
-            try:
-                collection = Collection.objects.get(pk=collection_id)
-                existing_who_starred = collection.whoStarred or []
-                if request.user.id in existing_who_starred:
-                    existing_who_starred.remove(request.user.id)
-                    collection.whoStarred = existing_who_starred
-                    collection.save()
-
-                return Response({'message': 'Collection removed from saved items'})
-            except Collection.DoesNotExist:
-                return Response({'error': 'Collection not found'}, status=404)
-
-
-    # Add the saved item to the user's saved_items list
-    existing_saved_items.append(item_data)
-    request.user.saved_items = existing_saved_items
-    request.user.save()
-        
-    try:
-        collection = Collection.objects.get(pk=collection_id)
-        existing_who_starred = collection.whoStarred or []
-        existing_who_starred.append(request.user.id)
-        collection.whoStarred = existing_who_starred
-        collection.save()
-
-        # Update collection owner's notifications list
-        owner = collection.owner
-        owner_notifications = owner.notifications or []
-        notification = {
-            'notification_emoji': '❤️',
-            'who_favourited': request.user.username,
-            'item_id': collection_id,
-            'type': item_type,
-            'item_name': item_name,
-            'date': str(timezone.now())
-        }
-        owner_notifications.append(notification)
-        owner.notifications = owner_notifications
-        owner.save()
-
-        return Response({'message': 'Saved data updated successfully'})
-    except Collection.DoesNotExist:
-        return Response({'error': 'Collection not found'}, status=404)
+            return update_star_count(Collection, item_id)
+    
+    elif item_type == 'quiz':
+        if remove_saved_item('quiz', item_id):
+            return update_star_count(Quiz, item_id)
+        else:
+            existing_saved_items.append(item_data)
+            request.user.saved_items = existing_saved_items
+            request.user.save()
+            return update_star_count(Quiz, item_id)
+    
+    return Response({'error': 'Invalid item type'}, status=400)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -309,7 +329,9 @@ def update_activity(request):
 
         user.streak = 1
 
-        user_activity.append(activity)
+        # user_activity.append(activity)
+        user_activity = [activity]
+
         user.activity = user_activity
         # user.activity = []
         user.current_week_data = current_week_data

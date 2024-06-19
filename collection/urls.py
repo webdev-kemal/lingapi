@@ -1,7 +1,7 @@
 # lingauth/urls.py
 
 from django.urls import path, include
-from .views import AddWordView, RemoveWordView, UserPublicListView, EditWordView, RemoveCollectionView, CreateCollectionView, UserCollectionListView, VisitCollectionView, EditCollectionView
+from .views import AddWordView, RemoveWordView, UserPublicListView, EditWordView, RemoveCollectionView, CreateCollectionView, UserCollectionListView, VisitCollectionView, EditCollectionView, AllCollectionsListView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -15,6 +15,7 @@ urlpatterns = [
     path('add-word/', AddWordView, name='add-word'),
     path('remove-word/', RemoveWordView, name='remove-word'),
     path('edit-word/', EditWordView, name='edit-word'),
+    path('all/', AllCollectionsListView.as_view(), name='user-collection-list'),
 
 ]
 

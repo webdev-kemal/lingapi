@@ -8,7 +8,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'first_name', 'last_name', 'pfp', 'locale', 'username', 'changedUsername', 'credits', 'notifications', 'old_notifications', 'saved_items', 'is_premium', "activity", "streak", "current_week_data"]
+        fields = ['id', 'email', 'first_name', 'last_name', 'pfp', 'locale', 'username', 'changedUsername', 'credits', 'notifications', 'old_notifications', 'saved_items', 'is_premium', "activity", "streak", "current_week_data", "quiz_data"]
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -55,3 +55,10 @@ class UserSerializerWithToken(UserSerializer):
 #     class Meta:
 #         model = CustomUser
 #         fields = ['credits', 'locale', 'username']
+
+class QuizDataSerializer(serializers.Serializer):
+    date = serializers.DateTimeField()
+    quiz_id = serializers.CharField(max_length=100)
+    choices_data = serializers.ListField(
+        child=serializers.DictField()
+    )
