@@ -16,7 +16,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from django.contrib.auth import get_user_model
 
 from rest_framework.decorators import api_view
-from .serializers import UserSerializerWithToken, MyTokenObtainPairSerializer
+from .serializers import UserSerializerWithToken, MyTokenObtainPairSerializer, UserSerializer
 from django.contrib.auth.hashers import make_password
 from django.conf import settings
 from urllib.parse import urlencode
@@ -94,23 +94,30 @@ def set_username(request):
         return Response({'error': 'Username is already taken'}, status=400)
 
     # Set the new username and mark changedUsername as True
+    user = request.user
 
-    user_notifications = request.user.notifications or []
+    if user.changedUsername and user.lastNicknameChange:
+        if (user.lastNicknameChange + timedelta(days=14)) > timezone.now():
+            time_remaining = (user.lastNicknameChange + timedelta(days=14)) - timezone.now()
+            return Response({'error': f'{time_remaining.days} gün sonra değiştirilebilir'}, status=401)
+
+    user_notifications = user.notifications or []
     notification = {
         'notification_emoji': '👀',
-        'old_nickname': request.user.username,
+        'old_nickname': user.username,
         'item_id': 0,
         'type': 'nickname',
         'item_name': new_username,
         'date': str(timezone.now())
     }
     user_notifications.append(notification)
-    request.user.notifications = user_notifications
+    user.notifications = user_notifications
   
-    request.user.username = new_username
-    request.user.changedUsername = True
+    user.username = new_username
+    user.lastNicknameChange = timezone.now()
+    user.changedUsername = True
 
-    request.user.save()
+    user.save()
 
 
     return Response({'message': 'Username set successfully'})
@@ -151,12 +158,21 @@ class UserInfoView(APIView):
             'activity': user.activity,
             'username': user.username,
             'quiz_data': user.quiz_data,
+            'greenWall': user.greenWall,
             'saved_items': user.saved_items,
             'notifications': user.notifications,
+            'studyProgress': user.studyProgress,
+            'paymentMethods': user.paymentMethods,
+            'lastRefillDate': user.lastRefillDate,
+            'studyPreference': user.studyPreference,
+            'lastPurchaseDate': user.lastPurchaseDate,
             'old_notifications': user.old_notifications,
             'current_week_data': user.current_week_data,
         }
         return Response(data)
+    
+
+
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -329,6 +345,15 @@ def update_activity(request):
 
         user.streak = 1
 
+        def get_day_of_year_today():
+    # Get current date
+            today = datetime.today()
+            day_of_year = today.timetuple().tm_yday
+            return day_of_year
+        
+        user.greenWall.append(get_day_of_year_today())
+        print(user.greenWall)
+
         # user_activity.append(activity)
         user_activity = [activity]
 
@@ -340,6 +365,22 @@ def update_activity(request):
         return Response({'message': 'Activity listed successfuly'})
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+    
+
+
+class EditCollectionView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        user_settings = request.data 
+        print(user_settings)
+
+        serializer = self.serializer_class(instance=user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'message': 'User edited successfully'})
 
 # def UserInitApi(request):
 #     id_token = request.headers.get('Authorization')

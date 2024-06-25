@@ -50,6 +50,16 @@ class CustomUser(AbstractUser):
     streak = models.IntegerField(default=0)
     current_week_data = models.JSONField(("current_week"), default=default_week_data)
 
+    lastRefillDate = models.DateTimeField(("last 30 refill"), auto_now_add=True, blank=True, null=True)
+    lastPurchaseDate = models.DateTimeField(("last edited"), auto_now_add=False, blank=True, null=True)
+    lastNicknameChange = models.DateTimeField(("last edited"), auto_now_add=False, blank=True, null=True)
+    paymentMethods = models.JSONField(("card details"), default=list)
+    studyPreference = models.IntegerField(default=1)
+    studyProgress = models.JSONField(("official sets finished"), default=list)
+    greenWall = models.JSONField(("github green wall"), default=list)
+
+
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
